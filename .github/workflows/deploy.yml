@@ -37,6 +37,4 @@ jobs:
             pip install -r requirements.txt
             pm2 stop mypdfbuddy || true
             pm2 delete mypdfbuddy || true
-            pm2 start "streamlit run app.py --server.port 8501 --server.address 0.0.0.0" \
-              --name mypdfbuddy \
-              --interpreter bash
+            pm2 start bash -- -c "source venv/bin/activate && streamlit run app.py --server.port 8501 --server.address 0.0.0.0" --name mypdfbuddy
