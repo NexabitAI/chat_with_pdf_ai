@@ -37,4 +37,6 @@ jobs:
             pip install -r requirements.txt
             pm2 stop mypdfbuddy || true
             pm2 delete mypdfbuddy || true
-            pm2 start "streamlit run app.py --server.port 8501 --server.address 0.0.0.0" --name mypdfbuddy --interpreter python3
+            pm2 start "streamlit run app.py --server.port 8501 --server.address 0.0.0.0" \
+              --name mypdfbuddy \
+              --interpreter bash
