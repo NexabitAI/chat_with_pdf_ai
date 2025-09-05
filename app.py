@@ -189,7 +189,7 @@ def chat_page():
                     llm=llm, retriever=vectorstore.as_retriever(), memory=memory
                 )
                 st.session_state.chat_history = []  # ✅ reset chat history
-                st.success("✅ PDFs processed! Start chatting below.")
+                st.success("✅ PDFs processed! Start chatting now.")
 
     if "conversation" in st.session_state:
         # ✅ Input + Send Button
