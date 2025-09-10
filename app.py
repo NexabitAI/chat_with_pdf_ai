@@ -30,21 +30,28 @@ landing_css = """
 }
 
 /* Features section */
-.features {
-    display: flex;
-    justify-content: space-around;
-    margin: 40px 0;
-    flex-wrap: wrap;
+.features{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap:16px;
+  margin:22px 0 10px;
+  align-items: stretch;
 }
-.feature-card {
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-    padding: 20px;
-    width: 28%;
-    text-align: center;
-    transition: 0.3s;
-    color: var(--text-color);
+.feature-card{
+  padding:18px;
+  background: var(--glass-bg, rgba(255,255,255,.66));
+  border-radius: var(--radius, 16px);
+  color: var(--text, #0e1525);
+  box-shadow: var(--shadow-1, 0 8px 28px rgba(0,0,0,.12));
+  border: 1px solid rgba(255,255,255, var(--border-alpha, .18));
+}
+.feature-card h3{ margin:0 0 6px; }
+.feature-card p{ margin:0; color: var(--text-muted, #54607a); }
+
+/* Optional tighter spacing on very small screens */
+@media (max-width: 480px){
+  .features{ gap:12px; }
+  .feature-card{ padding:14px; }
 }
 .feature-card:hover {
     transform: translateY(-6px);
@@ -131,14 +138,14 @@ def landing_page():
     st.markdown(
         """
         <div class='features'>
-            <div class='feature-card'>
-                <h3>⚡ Quick Upload</h3>
-                <p>Upload one or multiple PDFs instantly.</p>
-            </div>
-            <div class='feature-card'>
-                <h3>🤖 Smart AI</h3>
-                <p>Ask questions and receive context-aware answers.</p>
-            </div>
+          <div class='feature-card glass'>
+            <h3>⚡ Quick Upload</h3>
+            <p>Upload one or multiple PDFs instantly.</p>
+         </div>
+         <div class='feature-card glass'>
+           <h3>🤖 Smart AI</h3>
+           <p>Ask questions and receive context-aware answers.</p>
+         </div>
         </div>
         """,
         unsafe_allow_html=True,
