@@ -204,14 +204,26 @@ def chat_page():
                 st.session_state.chat_history = []  # ✅ reset chat history
                 st.success("✅ PDFs processed! Start chatting now.")
 
-    if "conversation" in st.session_state:
-        # ✅ Input + Send Button
-        user_question = st.text_input("Ask a question about your PDFs:", key="user_input")
-        if st.button("Send"):
-            if user_question:
-                response = st.session_state.conversation({"question": user_question})
-                st.session_state.chat_history.append(("user", user_question))
-                st.session_state.chat_history.append(("bot", response['answer']))
+    # ✅ Input: Enter = Send, and input clears after submit
+if "conversation" in st.session_state:
+    with st.form("qa_form", clear_on_submit=True):
+        col_inp, col_btn = st.columns([6, 1])
+        with col_inp:
+            user_question = st.text_input(
+                "Ask a question about your PDFs:",
+                key="user_input",
+                label_visibility="collapsed",
+                placeholder="e.g., Summarize section 2.1 from the contract…",
+            )
+        with col_btn:
+            submitted = st.form_submit_button("Send", use_container_width=True)
+
+    if submitted and user_question.strip():
+        with st.spinner("Thinking…"):
+            response = st.session_state.conversation({"question": user_question})
+        st.session_state.chat_history.append(("user", user_question))
+        st.session_state.chat_history.append(("bot", response.get("answer", "")))
+
 
         # ✅ Show chat history
         if "chat_history" in st.session_state:
