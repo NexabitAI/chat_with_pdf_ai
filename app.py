@@ -18,7 +18,6 @@ THEMES = ["Glassy Light", "Soft Dark", "High Contrast"]
 
 def theme_css(current: str) -> str:
     """Return CSS variables + glassmorphism styling for the selected theme."""
-    # Base variables shared across themes
     base = """
     <style>
     :root {
@@ -29,11 +28,10 @@ def theme_css(current: str) -> str:
       --border-alpha: 0.18;
       --blur: 14px;
       --accent: 82 91% 56%;
-      --accent-rgb: 99,102,241; /* indigo-500 */
-      --success-rgb: 16,185,129; /* emerald-500 */
+      --accent-rgb: 99,102,241;
+      --success-rgb: 16,185,129;
     }
 
-    /* App background & animated sheen */
     [data-testid="stAppViewContainer"] {
       position: relative;
       padding-top: 12px;
@@ -41,7 +39,6 @@ def theme_css(current: str) -> str:
       background-attachment: fixed !important;
     }
 
-    /* Decorative floating blurs */
     [data-testid="stAppViewContainer"]::before,
     [data-testid="stAppViewContainer"]::after {
       content: "";
@@ -64,7 +61,6 @@ def theme_css(current: str) -> str:
       [data-testid="stAppViewContainer"]::after { animation: none; }
     }
 
-    /* Utility */
     .glass {
       backdrop-filter: blur(var(--blur));
       -webkit-backdrop-filter: blur(var(--blur));
@@ -130,22 +126,18 @@ def theme_css(current: str) -> str:
       border-radius: var(--radius-sm);
     }
 
-    /* Chat bubbles */
     .chat-message { padding: 12px 14px; border-radius: 14px; margin: 8px 0; max-width: 920px; box-shadow: var(--shadow-1)}
     .user { margin-left: auto; background: var(--user-bg); color: var(--text); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(var(--blur)) }
     .bot  { margin-right: auto; background: var(--bot-bg);  color: var(--text); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(var(--blur)) }
 
-    /* Inputs alignment */
     .input-row { display: flex; gap: 8px; align-items: stretch; }
     .input-row > div:first-child { flex: 1 }
     .muted { color: var(--text-muted); font-size: .9rem }
 
-    /* Tighten default Streamlit spacing a touch */
     section.main > div { padding-top: 0 !important; }
     </style>
     """
 
-    # Theme-specific variables
     if current == "Glassy Light":
         theme_vars = """
         <style>
@@ -220,7 +212,8 @@ def theme_css(current: str) -> str:
 # HEADER (Brand + Theme)
 # =========================
 def header():
-    c1, c2, c3 = st.columns([1.2, 2, 1.5], vertical_alignment="center")
+    # Removed unsupported vertical_alignment kwarg for older Streamlit versions
+    c1, c2, c3 = st.columns([1.2, 2, 1.5])
     with c1:
         st.markdown(
             """
@@ -237,7 +230,6 @@ def header():
     with c3:
         if "theme" not in st.session_state:
             st.session_state.theme = THEMES[0]
-        # Segmented control via radio
         st.session_state.theme = st.radio(
             "Theme",
             THEMES,
@@ -256,7 +248,6 @@ def landing_page():
     st.markdown("<h1 class='hero-title'>📚 Chat with Your PDFs</h1>", unsafe_allow_html=True)
     st.markdown("<p class='hero-sub'>Upload PDFs and get instant, AI-powered answers with a glassy, modern UI.</p>", unsafe_allow_html=True)
 
-    # Features
     st.markdown(
         """
         <div class='features'>
@@ -277,7 +268,6 @@ def landing_page():
         unsafe_allow_html=True,
     )
 
-    # Steps
     st.markdown(
         """
         <div class='steps'>
@@ -315,7 +305,6 @@ def chat_page():
                     for pdf in pdf_docs:
                         pdf_reader = PdfReader(pdf)
                         for page in pdf_reader.pages:
-                            # Some PDFs may return None on extract_text; guard it.
                             page_text = page.extract_text() or ""
                             text += page_text + "\n"
 
@@ -343,7 +332,6 @@ def chat_page():
     # Main chat area
     if "conversation" in st.session_state:
         st.write("")
-        # Input row
         col_inp, col_btn = st.columns([6, 1])
         with col_inp:
             user_question = st.text_input(
@@ -360,7 +348,6 @@ def chat_page():
             st.session_state.chat_history.append(("user", user_question))
             st.session_state.chat_history.append(("bot", response.get("answer", "")))
 
-        # History
         st.write("")
         if "chat_history" in st.session_state and st.session_state.chat_history:
             for role, msg in st.session_state.chat_history:
