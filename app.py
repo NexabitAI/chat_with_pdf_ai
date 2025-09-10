@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
@@ -260,7 +261,7 @@ def chat_page():
 
 # ---------- Main ----------
 def main():
-    st.set_page_config(page_title="MyPDFBuddy-Chat with PDFs", page_icon="📚", layout="wide")
+    st.set_page_config(page_title="MyPDFBuddy-Chat with PDFs", page_icon="favicon.png", layout="wide")
 
     # --- Sync page state with URL query param ---
     if "page" not in st.session_state:
@@ -272,6 +273,26 @@ def main():
         if desired in ("landing", "chat") and desired != st.session_state.page:
             st.session_state.page = desired
 
+    components.html("""
+        <script>
+            (function () {
+                const head = (window.parent && window.parent.document && window.parent.document.head) || document.head;
+
+                function setMeta(attr, name, content) {
+                    let el = head.querySelector(`meta[${attr}='${name}']`);
+                    if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); head.appendChild(el); }
+                    el.setAttribute('content', content);
+                }
+
+                document.title = "MyPDFBuddy — Chat with your PDFs";
+                setMeta('name', 'description', 'Chat with your PDFs');
+                setMeta('property', 'og:title', 'MyPDFBuddy');
+                setMeta('property', 'og:description', 'Chat with your PDFs');
+                setMeta('name', 'twitter:title', 'MyPDFBuddy');
+                setMeta('name', 'twitter:description', 'Chat with your PDFs');
+            })();
+        </script>
+    """, height=0)
     # Reflect current state back to URL
     st.experimental_set_query_params(page=st.session_state.page)
 
