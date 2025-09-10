@@ -162,11 +162,23 @@ def landing_page():
         unsafe_allow_html=True,
     )
 
+    # Single click -> navigate and rerun immediately
     if st.button("🚀 Start Chatting"):
         st.session_state.page = "chat"
+        st.experimental_set_query_params(page="chat")
+        st.experimental_rerun()
 
 def chat_page():
     st.markdown(chat_css, unsafe_allow_html=True)
+
+    # Back to landing button (top-left)
+    back_col, _ = st.columns([1, 7])
+    with back_col:
+        if st.button("← Back to Home"):
+            st.session_state.page = "landing"
+            st.experimental_set_query_params(page="landing")
+            st.experimental_rerun()
+
     st.markdown("<h1 style='text-align: center;'>💬 Chat with Your PDFs</h1>", unsafe_allow_html=True)
 
     with st.sidebar:
@@ -180,13 +192,10 @@ def chat_page():
                     pdf_reader = PdfReader(pdf)
                     for page in pdf_reader.pages:
                         text += page.extract_text()
-
                 text_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len)
                 chunks = text_splitter.split_text(text)
-
                 embeddings = OpenAIEmbeddings()
                 vectorstore = FAISS.from_texts(chunks, embeddings)
-
                 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
                 llm = ChatOpenAI()
                 st.session_state.conversation = ConversationalRetrievalChain.from_llm(
@@ -215,28 +224,38 @@ def chat_page():
 # ---------- Main ----------
 def main():
     st.set_page_config(page_title="MyPDFBuddy-Chat with PDFs", page_icon="📚", layout="wide")
+
+    # --- Sync page state with URL query param ---
     if "page" not in st.session_state:
         st.session_state.page = "landing"
+
+    # If URL has ?page=..., honor it (no reload needed)
+    qp = st.experimental_get_query_params()
+    if "page" in qp:
+        desired = qp["page"][0]
+        if desired in ("landing", "chat") and desired != st.session_state.page:
+            st.session_state.page = desired
+
+    # Always reflect current state back to URL
+    st.experimental_set_query_params(page=st.session_state.page)
 
     if st.session_state.page == "landing":
         landing_page()
     elif st.session_state.page == "chat":
         chat_page()
 
+    # Hide default menu + footer (unchanged)
     st.markdown("""
        <style>
        /* Remove Streamlit's top-right menu (hamburger/kebab) */
-       #MainMenu {display: none;}                      /* hide menu container */
-        header [data-testid="stToolbar"] {display: none;}  /* hide the button itself */
+       #MainMenu {display: none;}
+       header [data-testid="stToolbar"] {display: none;}
        /* Hide "Made with Streamlit" footer */
-        footer {display:none !important;}
+       footer {display:none !important;}
        /* (Older builds) */
-        [data-testid="stFooter"] {display:none !important;}
-      </style>
-                
-                
-""", unsafe_allow_html=True)
-    
+       [data-testid="stFooter"] {display:none !important;}
+       </style>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
