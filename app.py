@@ -125,7 +125,7 @@ def landing_page():
     st.markdown(landing_css, unsafe_allow_html=True)
 
     st.markdown("<h1 class='hero-title'>📚 My PDF Buddy</h1>", unsafe_allow_html=True)
-    st.markdown("<h1 class='hero-title'>📚 Chat with Your PDFs</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='hero-title'>Chat with Your PDFs</h1>", unsafe_allow_html=True)
     st.markdown("<p class='hero-sub'>Upload PDFs and get instant AI-powered answers from them.</p>", unsafe_allow_html=True)
 
     st.markdown(
@@ -221,8 +221,15 @@ def main():
        /* Remove Streamlit's top-right menu (hamburger/kebab) */
        #MainMenu {display: none;}                      /* hide menu container */
         header [data-testid="stToolbar"] {display: none;}  /* hide the button itself */
+       /* Hide "Made with Streamlit" footer */
+        footer {display:none !important;}
+       /* (Older builds) */
+        [data-testid="stFooter"] {display:none !important;}
       </style>
+                
+                
 """, unsafe_allow_html=True)
+    
 
 if __name__ == "__main__":
     main()
