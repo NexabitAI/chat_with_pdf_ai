@@ -171,7 +171,7 @@ def landing_page():
 def chat_page():
     st.markdown(chat_css, unsafe_allow_html=True)
 
-    # Back to landing button (top-left)
+    # Back to landing button
     back_col, _ = st.columns([1, 7])
     with back_col:
         if st.button("← Back to Home"):
@@ -183,55 +183,80 @@ def chat_page():
 
     with st.sidebar:
         st.header("📂 Upload PDFs")
-        pdf_docs = st.file_uploader("Upload your PDFs", accept_multiple_files=True)
+        pdf_docs = st.file_uploader("Upload your PDFs", accept_multiple_files=True, key="pdf_uploader")
 
-        if st.button("Process"):
+        # Guard against double processing
+        if "processing" not in st.session_state:
+            st.session_state.processing = False
+
+        process_clicked = st.button("Process", disabled=st.session_state.processing)
+        if process_clicked and not st.session_state.processing:
             if pdf_docs:
-                text = ""
-                for pdf in pdf_docs:
-                    pdf_reader = PdfReader(pdf)
-                    for page in pdf_reader.pages:
-                        text += page.extract_text()
-                text_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len)
-                chunks = text_splitter.split_text(text)
-                embeddings = OpenAIEmbeddings()
-                vectorstore = FAISS.from_texts(chunks, embeddings)
-                memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-                llm = ChatOpenAI()
-                st.session_state.conversation = ConversationalRetrievalChain.from_llm(
-                    llm=llm, retriever=vectorstore.as_retriever(), memory=memory
-                )
-                st.session_state.chat_history = []  # ✅ reset chat history
-                st.success("✅ PDFs processed! Start chatting now.")
+                st.session_state.processing = True
+                try:
+                    with st.spinner("Indexing your PDFs…"):
+                        text = ""
+                        for pdf in pdf_docs:
+                            try:
+                                pdf_reader = PdfReader(pdf)
+                                for page in pdf_reader.pages:
+                                    page_text = page.extract_text() or ""
+                                    text += page_text + "\n"
+                            except Exception as e:
+                                st.warning(f"Skipping a file due to read error: {e}")
+
+                        if not text.strip():
+                            st.error("No readable text found in the uploaded PDFs.")
+                        else:
+                            text_splitter = CharacterTextSplitter(
+                                separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
+                            )
+                            chunks = text_splitter.split_text(text)
+
+                            embeddings = OpenAIEmbeddings()
+                            vectorstore = FAISS.from_texts(chunks, embeddings)
+
+                            memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+                            llm = ChatOpenAI()
+                            st.session_state.conversation = ConversationalRetrievalChain.from_llm(
+                                llm=llm, retriever=vectorstore.as_retriever(), memory=memory
+                            )
+                            st.session_state.chat_history = []  # reset chat history
+                            st.success("✅ PDFs processed! Start chatting now.")
+                            # Force immediate render of chat input
+                            st.experimental_rerun()
+                finally:
+                    st.session_state.processing = False
+            else:
+                st.warning("Please upload at least one PDF.")
 
     # ✅ Input: Enter = Send, and input clears after submit
-if "conversation" in st.session_state:
-    with st.form("qa_form", clear_on_submit=True):
-        col_inp, col_btn = st.columns([6, 1])
-        with col_inp:
-            user_question = st.text_input(
-                "Ask a question about your PDFs:",
-                key="user_input",
-                label_visibility="collapsed",
-                placeholder="e.g., Summarize section 2.1 from the contract…",
-            )
-        with col_btn:
-            submitted = st.form_submit_button("Send", use_container_width=True)
+    if "conversation" in st.session_state:
+        with st.form("qa_form", clear_on_submit=True):
+            col_inp, col_btn = st.columns([6, 1])
+            with col_inp:
+                user_question = st.text_input(
+                    "Ask a question about your PDFs:",
+                    key="user_input",
+                    label_visibility="collapsed",
+                    placeholder="e.g., Summarize section 2.1 from the contract…",
+                )
+            with col_btn:
+                submitted = st.form_submit_button("Send", use_container_width=True)
 
-    if submitted and user_question.strip():
-        with st.spinner("Thinking…"):
-            response = st.session_state.conversation({"question": user_question})
-        st.session_state.chat_history.append(("user", user_question))
-        st.session_state.chat_history.append(("bot", response.get("answer", "")))
+        if submitted and user_question and user_question.strip():
+            with st.spinner("Thinking…"):
+                response = st.session_state.conversation({"question": user_question})
+            st.session_state.chat_history.append(("user", user_question))
+            st.session_state.chat_history.append(("bot", response.get("answer", "")))
 
-
-        # ✅ Show chat history
-        if "chat_history" in st.session_state:
-            for role, msg in st.session_state.chat_history:
-                if role == "user":
-                    st.markdown(f"<div class='chat-message user'>{msg}</div>", unsafe_allow_html=True)
-                else:
-                    st.markdown(f"<div class='chat-message bot'>{msg}</div>", unsafe_allow_html=True)
+    # ✅ Show chat history
+    if "chat_history" in st.session_state and st.session_state.chat_history:
+        for role, msg in st.session_state.chat_history:
+            if role == "user":
+                st.markdown(f"<div class='chat-message user'>{msg}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='chat-message bot'>{msg}</div>", unsafe_allow_html=True)
 
 # ---------- Main ----------
 def main():
@@ -241,14 +266,13 @@ def main():
     if "page" not in st.session_state:
         st.session_state.page = "landing"
 
-    # If URL has ?page=..., honor it (no reload needed)
     qp = st.experimental_get_query_params()
     if "page" in qp:
         desired = qp["page"][0]
         if desired in ("landing", "chat") and desired != st.session_state.page:
             st.session_state.page = desired
 
-    # Always reflect current state back to URL
+    # Reflect current state back to URL
     st.experimental_set_query_params(page=st.session_state.page)
 
     if st.session_state.page == "landing":
@@ -256,15 +280,12 @@ def main():
     elif st.session_state.page == "chat":
         chat_page()
 
-    # Hide default menu + footer (unchanged)
+    # Hide Streamlit menu + footer
     st.markdown("""
        <style>
-       /* Remove Streamlit's top-right menu (hamburger/kebab) */
        #MainMenu {display: none;}
        header [data-testid="stToolbar"] {display: none;}
-       /* Hide "Made with Streamlit" footer */
        footer {display:none !important;}
-       /* (Older builds) */
        [data-testid="stFooter"] {display:none !important;}
        </style>
     """, unsafe_allow_html=True)
