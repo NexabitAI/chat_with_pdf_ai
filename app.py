@@ -124,6 +124,7 @@ chat_css = """
 def landing_page():
     st.markdown(landing_css, unsafe_allow_html=True)
 
+    st.markdown("<h1 class='hero-title'>📚 My PDF Buddy</h1>", unsafe_allow_html=True)
     st.markdown("<h1 class='hero-title'>📚 Chat with Your PDFs</h1>", unsafe_allow_html=True)
     st.markdown("<p class='hero-sub'>Upload PDFs and get instant AI-powered answers from them.</p>", unsafe_allow_html=True)
 
@@ -137,10 +138,6 @@ def landing_page():
             <div class='feature-card'>
                 <h3>🤖 Smart AI</h3>
                 <p>Ask questions and receive context-aware answers.</p>
-            </div>
-            <div class='feature-card'>
-                <h3>🌓 Light & Dark Mode</h3>
-                <p>Optimized for any theme.</p>
             </div>
         </div>
         """,
@@ -210,7 +207,7 @@ def chat_page():
 
 # ---------- Main ----------
 def main():
-    st.set_page_config(page_title="Chat with PDFs", page_icon="📚", layout="wide")
+    st.set_page_config(page_title="MyPDFBuddy-Chat with PDFs", page_icon="📚", layout="wide")
     if "page" not in st.session_state:
         st.session_state.page = "landing"
 
@@ -218,6 +215,14 @@ def main():
         landing_page()
     elif st.session_state.page == "chat":
         chat_page()
+
+    st.markdown("""
+       <style>
+       /* Remove Streamlit's top-right menu (hamburger/kebab) */
+       #MainMenu {display: none;}                      /* hide menu container */
+        header [data-testid="stToolbar"] {display: none;}  /* hide the button itself */
+      </style>
+""", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
