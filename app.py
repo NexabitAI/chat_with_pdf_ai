@@ -7,6 +7,7 @@ from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+from textwrap import dedent
 
 # ✅ Load environment variables
 load_dotenv()
@@ -17,8 +18,10 @@ load_dotenv()
 THEMES = ["Glassy Light", "Soft Dark", "High Contrast"]
 
 def theme_css(current: str) -> str:
-    """Return CSS variables + glassmorphism styling for the selected theme."""
-    base = """
+    """Return CSS variables + glassmorphism styling for the selected theme.
+    NOTE: no leading whitespace before <style> — avoids Markdown code block rendering.
+    """
+    base = dedent("""\
     <style>
     :root {
       --radius: 16px;
@@ -28,10 +31,11 @@ def theme_css(current: str) -> str:
       --border-alpha: 0.18;
       --blur: 14px;
       --accent: 82 91% 56%;
-      --accent-rgb: 99,102,241;
-      --success-rgb: 16,185,129;
+      --accent-rgb: 99,102,241; /* indigo-500 */
+      --success-rgb: 16,185,129; /* emerald-500 */
     }
 
+    /* App background & animated sheen */
     [data-testid="stAppViewContainer"] {
       position: relative;
       padding-top: 12px;
@@ -39,6 +43,7 @@ def theme_css(current: str) -> str:
       background-attachment: fixed !important;
     }
 
+    /* Decorative floating blurs */
     [data-testid="stAppViewContainer"]::before,
     [data-testid="stAppViewContainer"]::after {
       content: "";
@@ -61,6 +66,7 @@ def theme_css(current: str) -> str:
       [data-testid="stAppViewContainer"]::after { animation: none; }
     }
 
+    /* Utility */
     .glass {
       backdrop-filter: blur(var(--blur));
       -webkit-backdrop-filter: blur(var(--blur));
@@ -126,20 +132,23 @@ def theme_css(current: str) -> str:
       border-radius: var(--radius-sm);
     }
 
+    /* Chat bubbles */
     .chat-message { padding: 12px 14px; border-radius: 14px; margin: 8px 0; max-width: 920px; box-shadow: var(--shadow-1)}
     .user { margin-left: auto; background: var(--user-bg); color: var(--text); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(var(--blur)) }
     .bot  { margin-right: auto; background: var(--bot-bg);  color: var(--text); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(var(--blur)) }
 
+    /* Inputs alignment */
     .input-row { display: flex; gap: 8px; align-items: stretch; }
     .input-row > div:first-child { flex: 1 }
     .muted { color: var(--text-muted); font-size: .9rem }
 
+    /* Tighten default Streamlit spacing a touch */
     section.main > div { padding-top: 0 !important; }
     </style>
-    """
+    """)
 
     if current == "Glassy Light":
-        theme_vars = """
+        theme_vars = dedent("""\
         <style>
         :root {
           --text: #0e1525;
@@ -160,9 +169,9 @@ def theme_css(current: str) -> str:
         .btn-primary:hover { background: rgba(99,102,241,.22); }
         .tag { background: rgba(255,255,255,.65); color: #2a2f45; }
         </style>
-        """
+        """)
     elif current == "Soft Dark":
-        theme_vars = """
+        theme_vars = dedent("""\
         <style>
         :root {
           --text: #eaf2ff;
@@ -183,9 +192,9 @@ def theme_css(current: str) -> str:
         .btn-primary:hover { background: rgba(99,102,241,.26); }
         .tag { background: rgba(255,255,255,.08); color: #eaf2ff; }
         </style>
-        """
+        """)
     else:  # High Contrast
-        theme_vars = """
+        theme_vars = dedent("""\
         <style>
         :root {
           --text: #0a0a0a;
@@ -205,18 +214,17 @@ def theme_css(current: str) -> str:
         .btn-primary:hover { background: #000; }
         .tag { background: #111; color: #fff; }
         </style>
-        """
+        """)
     return base + theme_vars
 
 # =========================
 # HEADER (Brand + Theme)
 # =========================
 def header():
-    # Removed unsupported vertical_alignment kwarg for older Streamlit versions
-    c1, c2, c3 = st.columns([1.2, 2, 1.5])
+    c1, _, c3 = st.columns([1.2, 2, 1.5])  # removed vertical_alignment (not supported on older Streamlit)
     with c1:
         st.markdown(
-            """
+            dedent("""\
             <div class="glass" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .8rem;background:var(--glass-bg);">
               <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg, rgba(var(--accent-rgb),.9), rgba(16,185,129,.9));box-shadow:0 6px 18px rgba(0,0,0,.25)"></div>
               <div>
@@ -224,7 +232,7 @@ def header():
                 <div class="muted" style="font-size:.75rem">Chat • Extract • Summarize</div>
               </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
     with c3:
@@ -237,8 +245,6 @@ def header():
             horizontal=True,
             label_visibility="collapsed",
         )
-
-    # Inject CSS for the chosen theme
     st.markdown(theme_css(st.session_state.theme), unsafe_allow_html=True)
 
 # =========================
@@ -249,7 +255,7 @@ def landing_page():
     st.markdown("<p class='hero-sub'>Upload PDFs and get instant, AI-powered answers with a glassy, modern UI.</p>", unsafe_allow_html=True)
 
     st.markdown(
-        """
+        dedent("""\
         <div class='features'>
             <div class='feature-card glass'>
                 <h3>⚡ Quick Upload</h3>
@@ -264,18 +270,18 @@ def landing_page():
                 <p>Glassy Light, Soft Dark, and High Contrast with motion-safe animations.</p>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        """
+        dedent("""\
         <div class='steps'>
             <div class='step glass'>1️⃣ Upload your PDF documents</div>
             <div class='step glass'>2️⃣ Ask any question about them</div>
             <div class='step glass'>3️⃣ Get instant, accurate answers</div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -305,8 +311,7 @@ def chat_page():
                     for pdf in pdf_docs:
                         pdf_reader = PdfReader(pdf)
                         for page in pdf_reader.pages:
-                            page_text = page.extract_text() or ""
-                            text += page_text + "\n"
+                            text += (page.extract_text() or "") + "\n"
 
                     text_splitter = CharacterTextSplitter(
                         separator="\n",
@@ -341,7 +346,8 @@ def chat_page():
                 placeholder="e.g., Summarize section 2.1 from the contract…",
             )
         with col_btn:
-            send_clicked = st.button("Send", type="primary", use_container_width=True)
+            # Some older Streamlit versions may not support type="primary"; remove if it errors.
+            send_clicked = st.button("Send", use_container_width=True)
         if send_clicked and user_question:
             with st.spinner("Thinking…"):
                 response = st.session_state.conversation({"question": user_question})
@@ -349,7 +355,7 @@ def chat_page():
             st.session_state.chat_history.append(("bot", response.get("answer", "")))
 
         st.write("")
-        if "chat_history" in st.session_state and st.session_state.chat_history:
+        if st.session_state.get("chat_history"):
             for role, msg in st.session_state.chat_history:
                 css_class = "user" if role == "user" else "bot"
                 st.markdown(f"<div class='chat-message {css_class}'>{msg}</div>", unsafe_allow_html=True)
@@ -363,12 +369,9 @@ def chat_page():
 # =========================
 def main():
     st.set_page_config(page_title="pdfbuddy — Chat with PDFs", page_icon="📚", layout="wide")
-
-    header()  # brand + theme selector + CSS injection
-
+    header()
     if "page" not in st.session_state:
         st.session_state.page = "landing"
-
     if st.session_state.page == "landing":
         landing_page()
     else:
