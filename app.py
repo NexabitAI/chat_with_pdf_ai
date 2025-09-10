@@ -39,7 +39,7 @@ landing_css = """
 }
 .feature-card{
   padding:18px;
-  background: var(--glass-bg, rgba(255,255,255,.66));
+  background: transparent !important;
   border-radius: var(--radius, 16px);
   color: var(--text, #0e1525);
   box-shadow: var(--shadow-1, 0 8px 28px rgba(0,0,0,.12));
